@@ -1,5 +1,3 @@
-package org.jetbrains.kotlinx.lincheck.verifier.quiescent;
-
 /*
  * #%L
  * Lincheck
@@ -10,35 +8,31 @@ package org.jetbrains.kotlinx.lincheck.verifier.quiescent;
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Lesser Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/lgpl-3.0.html>.
  * #L%
  */
+package org.jetbrains.kotlinx.lincheck.verifier.quiescent;
 
-import org.jetbrains.kotlinx.lincheck.Actor;
-import org.jetbrains.kotlinx.lincheck.execution.ExecutionResult;
-import org.jetbrains.kotlinx.lincheck.execution.ExecutionScenario;
-import org.jetbrains.kotlinx.lincheck.verifier.CachedVerifier;
-import org.jetbrains.kotlinx.lincheck.verifier.linearizability.LinearizabilityVerifier;
+import org.jetbrains.kotlinx.lincheck.*;
+import org.jetbrains.kotlinx.lincheck.execution.*;
+import org.jetbrains.kotlinx.lincheck.verifier.*;
+import org.jetbrains.kotlinx.lincheck.verifier.linearizability.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class QuiescentConsistencyVerifier extends CachedVerifier {
-    private final ExecutionScenario originalScenario;
     private final LinearizabilityVerifier linearizabilityVerifier;
 
-    public QuiescentConsistencyVerifier(ExecutionScenario scenario, Class<?> sequentialSpecification) {
-        this.originalScenario = scenario;
-        this.linearizabilityVerifier = new LinearizabilityVerifier(convertScenario(scenario), sequentialSpecification);
+    public QuiescentConsistencyVerifier(Class<?> sequentialSpecification) {
+        this.linearizabilityVerifier = new LinearizabilityVerifier(sequentialSpecification);
     }
 
     private static ExecutionScenario convertScenario(ExecutionScenario scenario) {
@@ -69,11 +63,13 @@ public class QuiescentConsistencyVerifier extends CachedVerifier {
     }
 
     @Override
-    public boolean verifyResultsImpl(ExecutionResult results) {
-        return linearizabilityVerifier.verifyResultsImpl(new ExecutionResult(
-            results.initResults,
-            convertAccordingToScenario(originalScenario.parallelExecution, results.parallelResults),
-            results.postResults)
+    public boolean verifyResultsImpl(ExecutionScenario scenario, ExecutionResult results) {
+        return linearizabilityVerifier.verifyResultsImpl(convertScenario(scenario),
+            new ExecutionResult(
+                results.initResults,
+                convertAccordingToScenario(scenario.parallelExecution, results.parallelResults),
+                results.postResults
+            )
         );
     }
 

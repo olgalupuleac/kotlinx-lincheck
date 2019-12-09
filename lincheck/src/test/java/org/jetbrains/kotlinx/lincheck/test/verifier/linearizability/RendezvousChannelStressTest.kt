@@ -21,34 +21,36 @@
  */
 package org.jetbrains.kotlinx.lincheck.test.verifier.linearizability
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.annotations.*
 import org.jetbrains.kotlinx.lincheck.paramgen.*
 import org.jetbrains.kotlinx.lincheck.strategy.stress.*
+import org.jetbrains.kotlinx.lincheck.test.*
 import org.jetbrains.kotlinx.lincheck.verifier.linearizability.*
 import org.junit.*
 
-@LogLevel(LoggingLevel.DEBUG)
+@InternalCoroutinesApi
 @Param(name = "value", gen = IntGen::class, conf = "1:5")
-@StressCTest(sequentialSpecification = SequentialRendezvousIntChannel::class, verifier = LinearizabilityVerifier::class)
-class RendezvousChannelStressTest {
+class RendezvousChannelStressTest : AbstractLinCheckTest() {
     private val ch = Channel<Int>()
 
     @Operation(handleExceptionsAsResult = [ClosedSendChannelException::class])
     suspend fun send(@Param(name = "value") value: Int) = ch.send(value)
 
     @Operation(handleExceptionsAsResult = [ClosedReceiveChannelException::class])
-    suspend fun receive() = ch.receive() + 100
+    suspend fun receive() = ch.receive()
 
     @Operation(handleExceptionsAsResult = [ClosedReceiveChannelException::class])
-    suspend fun receiveOrNull() = ch.receiveOrNull()?.plus(100)
+    suspend fun receiveOrNull() = ch.receiveOrNull()
 
     @Operation
     fun close() = ch.close()
 
-    @Test
-    fun test() = LinChecker.check(RendezvousChannelStressTest::class.java)
+    override fun <O : Options<O, *>> O.customizeOptions(): O =
+        sequentialSpecification(SequentialRendezvousIntChannel::class.java)
 }
 
+@InternalCoroutinesApi
 class SequentialRendezvousIntChannel : SequentialIntChannel(capacity = 0)

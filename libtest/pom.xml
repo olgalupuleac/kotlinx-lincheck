@@ -19,7 +19,6 @@
             <artifactId>jctools-core</artifactId>
             <version>1.0</version>
         </dependency>
-
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-core</artifactId>
@@ -31,19 +30,16 @@
             <version>0.6</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>18.0</version>
         </dependency>
-
         <dependency>
             <groupId>com.boundary</groupId>
             <artifactId>high-scale-lib</artifactId>
             <version>1.0.6</version>
         </dependency>
-
         <dependency>
             <groupId>com.github.romix</groupId>
             <artifactId>java-concurrent-hash-trie-map</artifactId>
@@ -53,6 +49,13 @@
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>lincheck</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>lincheck</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
+            <type>test-jar</type>
             <scope>test</scope>
         </dependency>
     </dependencies>

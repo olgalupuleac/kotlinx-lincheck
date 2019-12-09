@@ -82,6 +82,7 @@ class LTS(sequentialSpecification: Class<*>) {
         /**
          * Computes or gets the existing transition from the current state by the given [actor].
          */
+        @Synchronized
         fun next(actor: Actor, expectedResult: Result, ticket: Int) =
            if (ticket == NO_TICKET) nextByRequest(actor, expectedResult) else nextByFollowUp(actor, ticket, expectedResult)
 
@@ -111,6 +112,7 @@ class LTS(sequentialSpecification: Class<*>) {
             return if (transitionInfo.isLegalByFollowUp(expectedResult)) transitionInfo else null
         }
 
+        @Synchronized
         fun nextByCancellation(actor: Actor, ticket: Int): TransitionInfo = transitionsByCancellations.computeIfAbsent(ticket) {
             generateNextState { instance, suspendedOperations, resumedTicketsWithResults, continuationsMap ->
                 // Invoke the given operation to count the next transition.
@@ -231,7 +233,8 @@ class LTS(sequentialSpecification: Class<*>) {
     /**
      * Creates and stores the new LTS state or gets the one if already exists.
      */
-    private inline fun <T> StateInfo.intern(
+    @Synchronized
+    private fun <T> StateInfo.intern(
         curOperation: Operation?,
         block: (StateInfo, RemappingFunction?) -> T
     ): T {

@@ -1,5 +1,3 @@
-package org.jetbrains.kotlinx.lincheck.test.verifier
-
 /*
  * #%L
  * Lincheck
@@ -21,6 +19,7 @@ package org.jetbrains.kotlinx.lincheck.test.verifier
  * <http://www.gnu.org/licenses/lgpl-3.0.html>.
  * #L%
  */
+package org.jetbrains.kotlinx.lincheck.test.verifier
 
 import org.jetbrains.kotlinx.lincheck.LinChecker
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
@@ -29,7 +28,7 @@ import org.jetbrains.kotlinx.lincheck.verifier.EpsilonVerifier
 import org.jetbrains.kotlinx.lincheck.verifier.VerifierState
 import org.junit.Test
 
-@StressCTest(verifier = EpsilonVerifier::class)
+@StressCTest(iterations = 10, threads = 2, actorsPerThread = 2, verifier = EpsilonVerifier::class)
 class EpsilonVerifierTest : VerifierState() {
     private var i = 0
 

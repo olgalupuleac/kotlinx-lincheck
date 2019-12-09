@@ -22,14 +22,13 @@ package org.jetbrains.kotlinx.lincheck.test;
  * #L%
  */
 
-import org.jetbrains.kotlinx.lincheck.LinChecker;
 import org.jetbrains.kotlinx.lincheck.annotations.Operation;
 import org.jetbrains.kotlinx.lincheck.strategy.stress.StressCTest;
 import org.junit.Test;
 
-@StressCTest(threads = 3, iterations = 100, invocationsPerIteration = 10, requireStateEquivalenceImplCheck = false)
+@StressCTest(threads = 3, iterations = 10, invocationsPerIteration = 10, requireStateEquivalenceImplCheck = false)
 public class RunOnceTest {
-    private A a = new A();;
+    private A a = new A();
 
     @Operation(runOnce = true)
     public void a() {

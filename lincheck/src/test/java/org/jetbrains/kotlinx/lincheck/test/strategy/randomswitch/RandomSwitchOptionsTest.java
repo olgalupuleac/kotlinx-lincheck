@@ -22,7 +22,6 @@ package org.jetbrains.kotlinx.lincheck.test.strategy.randomswitch;
  * #L%
  */
 
-import org.jetbrains.kotlinx.lincheck.LinChecker;
 import org.jetbrains.kotlinx.lincheck.Options;
 import org.jetbrains.kotlinx.lincheck.annotations.Operation;
 import org.jetbrains.kotlinx.lincheck.execution.RandomExecutionGenerator;

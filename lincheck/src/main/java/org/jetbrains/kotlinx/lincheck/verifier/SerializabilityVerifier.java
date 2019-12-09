@@ -22,7 +22,6 @@ package org.jetbrains.kotlinx.lincheck.verifier;
  * #L%
  */
 
-import org.jetbrains.kotlinx.lincheck.execution.ExecutionResult;
 import org.jetbrains.kotlinx.lincheck.execution.ExecutionScenario;
 import org.jetbrains.kotlinx.lincheck.verifier.linearizability.LinearizabilityVerifier;
 
@@ -38,8 +37,8 @@ import java.util.stream.Collectors;
 public class SerializabilityVerifier extends CachedVerifier {
     private final LinearizabilityVerifier linearizabilityVerifier;
 
-    public SerializabilityVerifier(ExecutionScenario scenario, Class<?> sequentialSpecification) {
-        this.linearizabilityVerifier = new LinearizabilityVerifier(convertScenario(scenario), sequentialSpecification);
+    public SerializabilityVerifier(Class<?> sequentialSpecification) {
+        this.linearizabilityVerifier = new LinearizabilityVerifier(sequentialSpecification);
     }
 
     private static <T> List<List<T>> convert(List<T> initPart, List<List<T>> parallelPart, List<T> postPart) {
@@ -66,8 +65,8 @@ public class SerializabilityVerifier extends CachedVerifier {
     }
 
     @Override
-    public boolean verifyResultsImpl(ExecutionResult results) {
-        return linearizabilityVerifier.verifyResultsImpl(convertResult(results));
+    public boolean verifyResultsImpl(ExecutionScenario scenario, ExecutionResult results) {
+        return linearizabilityVerifier.verifyResultsImpl(convertScenario(scenario), convertResult(results));
     }
 
     @Override

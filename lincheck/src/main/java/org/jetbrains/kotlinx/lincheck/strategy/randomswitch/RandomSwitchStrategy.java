@@ -22,10 +22,12 @@ package org.jetbrains.kotlinx.lincheck.strategy.randomswitch;
  * #L%
  */
 
-import org.jetbrains.kotlinx.lincheck.Reporter;
-import org.jetbrains.kotlinx.lincheck.execution.ExecutionScenario;
-import org.jetbrains.kotlinx.lincheck.strategy.ManagedStrategy;
-import org.jetbrains.kotlinx.lincheck.verifier.Verifier;
+import org.jetbrains.kotlinx.lincheck.*;
+import org.jetbrains.kotlinx.lincheck.execution.*;
+import org.jetbrains.kotlinx.lincheck.runner.*;
+import org.jetbrains.kotlinx.lincheck.strategy.*;
+
+import java.util.*;
 
 /**
  * This managed strategy switches current thread to a random one with the specified probability.
@@ -37,16 +39,19 @@ public class RandomSwitchStrategy extends ManagedStrategy {
     private final int invocations;
 
     public RandomSwitchStrategy(Class<?> testClass, ExecutionScenario scenario,
-        Verifier verifier, RandomSwitchCTestConfiguration testCfg, Reporter reporter)
+                                RandomSwitchCTestConfiguration testCfg, Reporter reporter)
     {
-        super(testClass, scenario, verifier, reporter);
+        super(testClass, scenario, reporter);
         this.invocations = testCfg.invocationsPerIteration;
     }
 
     @Override
-    protected void runImpl() throws Exception {
-        for (int i = 0; i < invocations; i++)
-            verifyResults(runInvocation());
+    protected List<InvocationResult> runImpl() throws Exception {
+        List<InvocationResult> results = new ArrayList<>();
+        for (int i = 1; i < invocations; i++) {
+            results.add(runInvocation());
+        }
+        return results;
     }
 
     @Override

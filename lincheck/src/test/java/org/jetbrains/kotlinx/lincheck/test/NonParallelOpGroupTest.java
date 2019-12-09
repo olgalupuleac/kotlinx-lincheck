@@ -22,28 +22,25 @@ package org.jetbrains.kotlinx.lincheck.test;
  * #L%
  */
 
-import org.jetbrains.kotlinx.lincheck.LinChecker;
-import org.jetbrains.kotlinx.lincheck.LoggingLevel;
-import org.jetbrains.kotlinx.lincheck.annotations.LogLevel;
-import org.jetbrains.kotlinx.lincheck.annotations.OpGroupConfig;
+import org.jctools.queues.atomic.*;
+import org.jetbrains.annotations.*;
+import org.jetbrains.kotlinx.lincheck.*;
 import org.jetbrains.kotlinx.lincheck.annotations.Operation;
-import org.jetbrains.kotlinx.lincheck.annotations.Param;
-import org.jetbrains.kotlinx.lincheck.paramgen.IntGen;
-import org.jetbrains.kotlinx.lincheck.strategy.stress.StressCTest;
-import org.jctools.queues.atomic.SpscLinkedAtomicQueue;
-import org.junit.Test;
+import org.jetbrains.kotlinx.lincheck.annotations.*;
+import org.jetbrains.kotlinx.lincheck.strategy.stress.*;
+import org.jetbrains.kotlinx.lincheck.verifier.*;
+import org.junit.*;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
 
 @OpGroupConfig(name = "producer", nonParallel = true)
 @OpGroupConfig(name = "consumer", nonParallel = true)
-@StressCTest(requireStateEquivalenceImplCheck = false)
-public class NonParallelOpGroupTest {
+@StressCTest(iterations = 50, actorsPerThread = 3)
+public class NonParallelOpGroupTest extends VerifierState {
     private SpscLinkedAtomicQueue<Integer> queue = new SpscLinkedAtomicQueue<>();
-    private AtomicInteger i = new AtomicInteger();
 
     @Operation(group = "producer")
-    public void offer(@Param(gen = IntGen.class) Integer x) {
+    public void offer(Integer x) {
         queue.offer(x);
     }
 
@@ -52,9 +49,16 @@ public class NonParallelOpGroupTest {
         return queue.poll();
     }
 
-    @Operation
-    public int incAndGet() {
-        return i.incrementAndGet();
+    @NotNull
+    @Override
+    protected Object extractState() {
+        List<Integer> elements = new ArrayList<>();
+        while (true) {
+            Integer el = poll();
+            if (el == null) break;
+            elements.add(el);
+        }
+        return elements;
     }
 
     @Test

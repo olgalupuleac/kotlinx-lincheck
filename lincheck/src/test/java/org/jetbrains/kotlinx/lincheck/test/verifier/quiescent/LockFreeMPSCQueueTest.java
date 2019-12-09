@@ -22,20 +22,25 @@ package org.jetbrains.kotlinx.lincheck.test.verifier.quiescent;
  * #L%
  */
 
-import org.jetbrains.kotlinx.lincheck.LinChecker;
+import kotlin.*;
+import org.jetbrains.annotations.*;
 import org.jetbrains.kotlinx.lincheck.annotations.OpGroupConfig;
 import org.jetbrains.kotlinx.lincheck.annotations.Operation;
 import org.jetbrains.kotlinx.lincheck.annotations.Param;
 import org.jetbrains.kotlinx.lincheck.paramgen.IntGen;
 import org.jetbrains.kotlinx.lincheck.strategy.stress.StressCTest;
+import org.jetbrains.kotlinx.lincheck.verifier.*;
 import org.jetbrains.kotlinx.lincheck.verifier.quiescent.QuiescentConsistencyVerifier;
 import org.jetbrains.kotlinx.lincheck.verifier.quiescent.QuiescentConsistent;
 import org.junit.Test;
 
-@StressCTest(verifier = QuiescentConsistencyVerifier.class, requireStateEquivalenceImplCheck = false)
+import java.util.*;
+
+@StressCTest(iterations = 50, actorsBefore = 0, actorsPerThread = 2, verifier = QuiescentConsistencyVerifier.class)
 @OpGroupConfig(name = "consumer", nonParallel = true)
-public class LockFreeMPSCQueueTest {
+public class LockFreeMPSCQueueTest extends VerifierState {
     private LockFreeMPSCQueue<Integer> q = new LockFreeMPSCQueue<>();
+    private boolean closed = false;
 
     @Operation(group = "consumer")
     @QuiescentConsistent
@@ -52,6 +57,19 @@ public class LockFreeMPSCQueueTest {
     @QuiescentConsistent
     public void close() {
         q.close();
+        closed = true;
+    }
+
+    @NotNull
+    @Override
+    protected Object extractState() {
+        List<Integer> elements = new ArrayList<>();
+        while (true) {
+            Integer el = removeFirstOrNull();
+            if (el == null) break;
+            elements.add(el);
+        }
+        return new Pair<>(elements, closed);
     }
 
     @Test

@@ -40,7 +40,7 @@ private typealias SuspensionPointResultWithContinuation = AtomicReference<Pair<k
  *
  * It is pretty useful for stress testing or if you do not care about context switches.
  */
-open class ParallelThreadsRunner(
+internal open class ParallelThreadsRunner(
     scenario: ExecutionScenario,
     strategy: Strategy,
     testClass: Class<*>,
@@ -48,6 +48,7 @@ open class ParallelThreadsRunner(
 ) : Runner(scenario, strategy, testClass) {
     private lateinit var testInstance: Any
     private val executor = newFixedThreadPool(scenario.threads, ParallelThreadsRunner::TestThread)
+    private val completedOrSuspendedThreads = AtomicInteger(0)
 
     private val completions = List(scenario.threads) { threadId ->
         List(scenario.parallelExecution[threadId].size) { Completion(threadId) }
@@ -163,41 +164,34 @@ open class ParallelThreadsRunner(
         return suspensionPointResults[threadId]
     }
 
-    override fun run(): ExecutionResult? {
+    override fun run(): InvocationResult {
         reset()
-        val initResults = scenario.initExecution.map { initActor -> executeActor(testInstance, initActor) }
-        val parallelResults = testThreadExecutions.map { executor.submit(it) }.map { future ->
-            try {
-                future.get(10, TimeUnit.SECONDS).toList()
-            } catch (e: TimeoutException) {
-                val stackTraces = Thread.getAllStackTraces().filter { (t, _) -> t is TestThread }
-                val msgBuilder = StringBuilder()
-                msgBuilder.appendln("The execution has hung, see the thread dump:")
-                for ((t, stackTrace) in stackTraces) {
-                    t as TestThread
-                    msgBuilder.appendln("Thread-${t.iThread}:")
-                    for (ste in stackTrace) {
-                        if (ste.className.startsWith("org.jetbrains.kotlinx.lincheck.runner.")) break
-                        msgBuilder.appendln("\t$ste")
-                    }
-                    msgBuilder.appendln()
+        try {
+            val initResults = scenario.initExecution.map { initActor -> executeActor(testInstance, initActor) }
+            val parallelResults = testThreadExecutions.map { executor.submit(it) }.map { future ->
+                try {
+                    future.get(10, TimeUnit.SECONDS).toList()
+                } catch (e: TimeoutException) {
+                    val threadDump = Thread.getAllStackTraces().filter { (t, _) -> t is TestThread }
+                    threadDump.keys.forEach { it.stop() }
+                    return DeadlockInvocationResult(threadDump)
                 }
-                Thread.getAllStackTraces().map { it.key }.filterIsInstance<TestThread>().forEach { it.stop() }
-                throw AssertionError(msgBuilder.toString())
             }
-        }
-        val dummyCompletion = Continuation<Any?>(EmptyCoroutineContext) {}
-        var postPartSuspended = false
-        val postResults = scenario.postExecution.map { postActor ->
-            // no actors are executed after suspension of a post part
-            if (postPartSuspended) {
-                NoResult
-            } else {
-                // post part may contain suspendable actors if there aren't any in the parallel part, invoke with dummy continuation
-                executeActor(testInstance, postActor, dummyCompletion).also { postPartSuspended = it.wasSuspended }
+            val dummyCompletion = Continuation<Any?>(EmptyCoroutineContext) {}
+            var postPartSuspended = false
+            val postResults = scenario.postExecution.map { postActor ->
+                // no actors are executed after suspension of a post part
+                if (postPartSuspended) {
+                    NoResult
+                } else {
+                    // post part may contain suspendable actors if there aren't any in the parallel part, invoke with dummy continuation
+                    executeActor(testInstance, postActor, dummyCompletion).also { postPartSuspended = it.wasSuspended }
+                }
             }
+            return CompletedInvocationResult(ExecutionResult(initResults, parallelResults, postResults))
+        } catch (e: Throwable) {
+            return UnexpectedExceptionInvocationResult(e)
         }
-        return ExecutionResult(initResults, parallelResults, postResults)
     }
 
     override fun onStart(iThread: Int) {

@@ -23,12 +23,13 @@ package org.jetbrains.kotlinx.lincheck.strategy;
  */
 
 import org.jetbrains.kotlinx.lincheck.Reporter;
-import org.jetbrains.kotlinx.lincheck.execution.ExecutionResult;
 import org.jetbrains.kotlinx.lincheck.execution.ExecutionScenario;
+import org.jetbrains.kotlinx.lincheck.runner.InvocationResult;
 import org.jetbrains.kotlinx.lincheck.runner.ParallelThreadsRunner;
 import org.jetbrains.kotlinx.lincheck.runner.Runner;
-import org.jetbrains.kotlinx.lincheck.verifier.Verifier;
 import org.objectweb.asm.ClassVisitor;
+
+import java.util.*;
 
 /**
  * This is an abstract class for all managed strategies.
@@ -45,8 +46,8 @@ public abstract class ManagedStrategy extends Strategy {
     private final Runner runner;
     private ManagedStrategyTransformer transformer;
 
-    protected ManagedStrategy(Class<?> testClass, ExecutionScenario scenario, Verifier verifier, Reporter reporter) {
-        super(scenario, verifier, reporter);
+    protected ManagedStrategy(Class<?> testClass, ExecutionScenario scenario, Reporter reporter) {
+        super(scenario, reporter);
         nThreads = scenario.parallelExecution.size();
         runner = new ParallelThreadsRunner(scenario, this, testClass, null) {
             @Override
@@ -75,9 +76,9 @@ public abstract class ManagedStrategy extends Strategy {
     }
 
     @Override
-    public final void run() throws Exception {
+    public final List<InvocationResult> run() throws Exception {
         try {
-            runImpl();
+            return runImpl();
         } finally {
             runner.close();
         }
@@ -88,7 +89,7 @@ public abstract class ManagedStrategy extends Strategy {
      *
      * @return invocation results for each executed actor.
      */
-    protected final ExecutionResult runInvocation() throws InterruptedException {
+    protected final InvocationResult runInvocation() throws InterruptedException {
         return runner.run();
     }
 
@@ -103,10 +104,8 @@ public abstract class ManagedStrategy extends Strategy {
 
     /**
      * This method implements the strategy logic
-     *
-     * @throws Exception an occurred exception (at least by {@link Verifier}) during the testing
      */
-    protected abstract void runImpl() throws Exception;
+    protected abstract List<InvocationResult> runImpl() throws Exception;
 
     // == LISTENING EVENTS ==
 

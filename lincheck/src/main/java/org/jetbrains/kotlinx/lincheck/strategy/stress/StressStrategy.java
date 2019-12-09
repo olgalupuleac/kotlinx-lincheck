@@ -22,19 +22,13 @@ package org.jetbrains.kotlinx.lincheck.strategy.stress;
  * #L%
  */
 
-import org.jetbrains.kotlinx.lincheck.Actor;
-import org.jetbrains.kotlinx.lincheck.Reporter;
-import org.jetbrains.kotlinx.lincheck.execution.ExecutionScenario;
-import org.jetbrains.kotlinx.lincheck.runner.ParallelThreadsRunner;
-import org.jetbrains.kotlinx.lincheck.runner.Runner;
-import org.jetbrains.kotlinx.lincheck.strategy.Strategy;
-import org.jetbrains.kotlinx.lincheck.verifier.Verifier;
+import org.jetbrains.kotlinx.lincheck.*;
+import org.jetbrains.kotlinx.lincheck.execution.*;
+import org.jetbrains.kotlinx.lincheck.runner.*;
+import org.jetbrains.kotlinx.lincheck.strategy.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.Phaser;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.*;
+import java.util.concurrent.atomic.*;
 
 /**
  * This strategy
@@ -50,8 +44,8 @@ public class StressStrategy extends Strategy {
     private final AtomicInteger uninitializedThreads = new AtomicInteger(0); // for threads synchronization
 
     public StressStrategy(Class<?> testClass, ExecutionScenario scenario,
-                          Verifier verifier, StressCTestConfiguration testCfg, Reporter reporter) {
-        super(scenario, verifier, reporter);
+                          StressCTestConfiguration testCfg, Reporter reporter) {
+        super(scenario, reporter);
         this.invocations = testCfg.invocationsPerIteration;
         // Create waits if needed
         waits = testCfg.addWaits ? new ArrayList<>() : null;
@@ -61,7 +55,6 @@ public class StressStrategy extends Strategy {
             }
         }
         // Create runner
-        Phaser phaser = new Phaser(testCfg.threads);
         runner = new ParallelThreadsRunner(scenario, this, testClass, waits) {
             @Override
             public void onStart(int iThread) {
@@ -73,10 +66,11 @@ public class StressStrategy extends Strategy {
     }
 
     @Override
-    public void run() throws InterruptedException {
+    public List<InvocationResult> run() throws InterruptedException {
         try {
+            List<InvocationResult> results = new ArrayList<>();
             // Run invocations
-            for (int invocation = 0; invocation < invocations; invocation++) {
+            for (int invocation = 1; invocation <= invocations; invocation++) {
                 // Specify waits if needed
                 if (waits != null) {
                     int maxWait = (int) ((float) invocation * MAX_WAIT / invocations) + 1;
@@ -87,8 +81,11 @@ public class StressStrategy extends Strategy {
                     }
                 }
                 uninitializedThreads.set(scenario.parallelExecution.size()); // reinit synchronization
-                verifyResults(runner.run());
+                InvocationResult r = runner.run();
+                results.add(r);
+                if (r.isError()) break;
             }
+            return results;
         } finally {
             runner.close();
         }

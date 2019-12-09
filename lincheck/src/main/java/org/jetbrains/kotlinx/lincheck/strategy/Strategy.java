@@ -22,18 +22,14 @@ package org.jetbrains.kotlinx.lincheck.strategy;
  * #L%
  */
 
-import org.jetbrains.kotlinx.lincheck.CTestConfiguration;
-import org.jetbrains.kotlinx.lincheck.Reporter;
-import org.jetbrains.kotlinx.lincheck.execution.ExecutionResult;
-import org.jetbrains.kotlinx.lincheck.execution.ExecutionScenario;
-import org.jetbrains.kotlinx.lincheck.strategy.randomswitch.RandomSwitchCTestConfiguration;
-import org.jetbrains.kotlinx.lincheck.strategy.randomswitch.RandomSwitchStrategy;
-import org.jetbrains.kotlinx.lincheck.strategy.stress.StressCTestConfiguration;
-import org.jetbrains.kotlinx.lincheck.strategy.stress.StressStrategy;
-import org.jetbrains.kotlinx.lincheck.verifier.Verifier;
-import org.objectweb.asm.ClassVisitor;
+import org.jetbrains.kotlinx.lincheck.*;
+import org.jetbrains.kotlinx.lincheck.execution.*;
+import org.jetbrains.kotlinx.lincheck.runner.*;
+import org.jetbrains.kotlinx.lincheck.strategy.randomswitch.*;
+import org.jetbrains.kotlinx.lincheck.strategy.stress.*;
+import org.objectweb.asm.*;
 
-import static org.jetbrains.kotlinx.lincheck.ReporterKt.appendIncorrectResults;
+import java.util.*;
 
 /**
  * Implementation of this class describes how to run the generated execution.
@@ -45,20 +41,10 @@ import static org.jetbrains.kotlinx.lincheck.ReporterKt.appendIncorrectResults;
 public abstract class Strategy {
     protected final ExecutionScenario scenario;
     protected final Reporter reporter;
-    private final Verifier verifier;
 
-    protected Strategy(ExecutionScenario scenario, Verifier verifier, Reporter reporter) {
+    protected Strategy(ExecutionScenario scenario, Reporter reporter) {
         this.scenario = scenario;
-        this.verifier = verifier;
         this.reporter = reporter;
-    }
-
-    protected void verifyResults(ExecutionResult results) {
-        if (!verifier.verifyResults(results)) {
-            StringBuilder msgBuilder = new StringBuilder("Invalid interleaving found:\n");
-            appendIncorrectResults(msgBuilder, scenario, results);
-            throw new AssertionError(msgBuilder.toString());
-        }
     }
 
     public ClassVisitor createTransformer(ClassVisitor cv) {
@@ -73,17 +59,16 @@ public abstract class Strategy {
      * Creates {@link Strategy} based on {@code testCfg} type.
      */
     public static Strategy createStrategy(CTestConfiguration testCfg, Class<?> testClass,
-        ExecutionScenario scenario, Verifier verifier, Reporter reporter)
-    {
+                                          ExecutionScenario scenario, Reporter reporter) {
         if (testCfg instanceof StressCTestConfiguration) {
-            return new StressStrategy(testClass, scenario, verifier,
+            return new StressStrategy(testClass, scenario,
                 (StressCTestConfiguration) testCfg, reporter);
         } else if (testCfg instanceof RandomSwitchCTestConfiguration) {
-            return new RandomSwitchStrategy(testClass, scenario, verifier,
+            return new RandomSwitchStrategy(testClass, scenario,
                 (RandomSwitchCTestConfiguration) testCfg, reporter);
         }
         throw new IllegalArgumentException("Unknown strategy configuration type: " + testCfg.getClass());
     }
 
-    public abstract void run() throws Exception;
+    public abstract List<InvocationResult> run() throws Exception;
 }

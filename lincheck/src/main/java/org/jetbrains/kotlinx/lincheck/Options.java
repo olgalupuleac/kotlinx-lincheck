@@ -164,5 +164,4 @@ public abstract class Options<OPT extends Options, CTEST extends CTestConfigurat
         this.sequentialSpecification = clazz;
         return (OPT) this;
     }
-
 }

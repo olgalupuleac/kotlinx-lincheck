@@ -60,7 +60,7 @@ fun verify(
     val (scenario, results) = scenarioWithResults(block)
     val verifier = verifierClass.getConstructor(ExecutionScenario::class.java, Class::class.java)
         .newInstance(scenario, testClass)
-    val res = verifier.verifyResults(results)
+    val res = verifier.verifyResults(scenario, results)
     assert(res == correct)
 }
 

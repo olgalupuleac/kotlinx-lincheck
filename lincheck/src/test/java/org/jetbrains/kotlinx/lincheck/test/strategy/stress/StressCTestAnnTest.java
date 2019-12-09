@@ -22,8 +22,6 @@ package org.jetbrains.kotlinx.lincheck.test.strategy.stress;
  * #L%
  */
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlinx.lincheck.LinChecker;
 import org.jetbrains.kotlinx.lincheck.annotations.Operation;
 import org.jetbrains.kotlinx.lincheck.execution.RandomExecutionGenerator;
 import org.jetbrains.kotlinx.lincheck.strategy.stress.StressCTest;

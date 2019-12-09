@@ -24,18 +24,17 @@ package org.jetbrains.kotlinx.lincheck.test.verifier.serializability
 
 import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.annotations.*
+import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.paramgen.*
 import org.jetbrains.kotlinx.lincheck.strategy.stress.*
-import org.jetbrains.kotlinx.lincheck.verifier.SerializabilityVerifier
+import org.jetbrains.kotlinx.lincheck.verifier.*
 import org.junit.Test
 
 
-@StressCTest(actorsBefore = 2,
-             threads = 2, actorsPerThread = 4,
-             actorsAfter = 2,
-             verifier = SerializabilityVerifier::class)
-class SerializableQueueSimulationTest {
-    val q = SerializableQueueSimulation<Int>()
+@StressCTest(iterations = 30, actorsBefore = 1, threads = 2, actorsPerThread = 2, actorsAfter = 2,
+             verifier = SerializabilityVerifier::class, requireStateEquivalenceImplCheck = false)
+class SerializableQueueSimulationTest : VerifierState() {
+    private val q = SerializableQueueSimulation<Int>()
 
     @Operation
     fun push(@Param(gen = IntGen::class) item: Int) = q.push(item)
@@ -45,19 +44,4 @@ class SerializableQueueSimulationTest {
 
     @Test
     fun test() = LinChecker.check(SerializableQueueSimulationTest::class.java)
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as SerializableQueueSimulationTest
-
-        if (q != other.q) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return q.hashCode()
-    }
 }

@@ -3,6 +3,7 @@
  * Lincheck
  * %%
  * Copyright (C) 2015 - 2018 Devexperts, LLC
+ * Copyright (C) 2019 JetBrains s.r.o.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -19,12 +20,11 @@
  * <http://www.gnu.org/licenses/lgpl-3.0.html>.
  * #L%
  */
-
 package org.jetbrains.kotlinx.lincheck
 
-import org.jetbrains.kotlinx.lincheck.execution.ExecutionResult
-import org.jetbrains.kotlinx.lincheck.execution.ExecutionScenario
-import java.io.PrintStream
+import org.jetbrains.kotlinx.lincheck.execution.*
+import org.jetbrains.kotlinx.lincheck.runner.*
+import java.io.*
 
 class Reporter @JvmOverloads constructor(val logLevel: LoggingLevel, val out: PrintStream = System.out) {
     fun logIteration(iteration: Int, maxIterations: Int, scenario: ExecutionScenario) = synchronized(this) {
@@ -42,6 +42,36 @@ class Reporter @JvmOverloads constructor(val logLevel: LoggingLevel, val out: Pr
             out.println(this)
         }
     }
+
+    fun generateReport(result: IterationResult): String = StringBuilder().apply {
+        when (result) {
+            is IncorrectIterationResult -> {
+                appendln("Incorrect interleaving found:")
+                appendIncorrectResults(result.scenario, result.results)
+            }
+            is UnexpectedExceptionIterationResult -> {
+                appendln("Illegal exception was thrown:")
+                appendExecutionScenario(result.scenario)
+                appendln()
+                appendExceptionStackTrace(result.exception)
+            }
+            is DeadlockIterationResult -> {
+                appendln("The execution has hung, see the thread dump:")
+                for ((t, stackTrace) in result.threadDump) {
+                    t as ParallelThreadsRunner.TestThread
+                    appendln("Thread-${t.iThread}:")
+                    for (ste in stackTrace) {
+                        if (logLevel > LoggingLevel.DEBUG && ste.className.startsWith("org.jetbrains.kotlinx.lincheck.runner.")) break
+                        appendln("\t$ste")
+                    }
+                    appendln()
+                }
+                appendExecutionScenario(result.scenario)
+            }
+            is SuccessIterationResult -> append("No error was found.")
+            else -> throw IllegalStateException("Unsupported IterationResult to be reported.")
+        }
+    }.toString()
 
     inline fun log(logLevel: LoggingLevel, crossinline msg: () -> String) {
         if (this.logLevel > logLevel) return
@@ -116,7 +146,7 @@ private fun StringBuilder.appendExecutionScenario(scenario: ExecutionScenario) {
     }
 }
 
-fun StringBuilder.appendIncorrectResults(scenario: ExecutionScenario, results: ExecutionResult) {
+private fun StringBuilder.appendIncorrectResults(scenario: ExecutionScenario, results: ExecutionResult) {
     appendln("= Invalid execution results: =")
     if (scenario.initExecution.isNotEmpty()) {
         appendln("Init part:")
@@ -130,4 +160,17 @@ fun StringBuilder.appendIncorrectResults(scenario: ExecutionScenario, results: E
         appendln("Post part:")
         append(uniteActorsAndResults(scenario.postExecution, results.postResults))
     }
+}
+
+private fun StringBuilder.appendExceptionStackTrace(e: Throwable) {
+    val sw = StringWriter()
+    val pw = PrintWriter(sw)
+    val reducedStackTrace = mutableListOf<StackTraceElement>()
+    for (ste in e.stackTrace) {
+        if (ste.className.startsWith("org.jetbrains.kotlinx.lincheck.runner.")) break
+        reducedStackTrace.add(ste)
+    }
+    e.stackTrace = reducedStackTrace.toTypedArray()
+    e.printStackTrace(pw)
+    append(sw.toString())
 }

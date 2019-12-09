@@ -35,12 +35,11 @@ import org.jetbrains.kotlinx.lincheck.verifier.*
  * for performance improvement (see [CachedVerifier]).
  */
 class LinearizabilityVerifier(
-    scenario: ExecutionScenario,
     sequentialSpecification: Class<*>
-) : AbstractLTSVerifier(scenario, sequentialSpecification) {
+) : AbstractLTSVerifier(sequentialSpecification) {
     override val lts: LTS = LTS(sequentialSpecification = sequentialSpecification)
 
-    override fun createInitialContext(results: ExecutionResult) =
+    override fun createInitialContext(scenario: ExecutionScenario, results: ExecutionResult) =
         LinearizabilityContext(scenario, results, lts.initialState)
 }
 

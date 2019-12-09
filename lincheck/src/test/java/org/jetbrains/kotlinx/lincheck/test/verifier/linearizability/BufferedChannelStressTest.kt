@@ -21,16 +21,18 @@
  */
 package org.jetbrains.kotlinx.lincheck.test.verifier.linearizability
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.jetbrains.kotlinx.lincheck.*
 import org.jetbrains.kotlinx.lincheck.annotations.*
 import org.jetbrains.kotlinx.lincheck.paramgen.*
 import org.jetbrains.kotlinx.lincheck.strategy.stress.*
+import org.jetbrains.kotlinx.lincheck.test.*
 import org.junit.*
 
+@InternalCoroutinesApi
 @Param(name = "value", gen = IntGen::class, conf = "1:5")
-@StressCTest(actorsPerThread = 3, sequentialSpecification = SequentiaBuffered2IntChannel::class)
-class BufferedChannelStressTest {
+class BufferedChannelStressTest : AbstractLinCheckTest() {
     private val c = Channel<Int>(2)
 
     @Operation(cancellableOnSuspension = false)
@@ -45,8 +47,9 @@ class BufferedChannelStressTest {
     @Operation
     fun offer(@Param(name = "value") value: Int) = c.offer(value)
 
-    @Test
-    fun test() = LinChecker.check(BufferedChannelStressTest::class.java)
+    override fun <O : Options<O, *>> O.customizeOptions(): O =
+        sequentialSpecification(SequentiaBuffered2IntChannel::class.java)
 }
 
+@InternalCoroutinesApi
 class SequentiaBuffered2IntChannel : SequentialIntChannel(capacity = 2)

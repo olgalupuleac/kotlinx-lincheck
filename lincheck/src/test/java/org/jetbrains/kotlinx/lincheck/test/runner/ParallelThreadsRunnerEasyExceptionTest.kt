@@ -25,6 +25,8 @@ import org.jetbrains.kotlinx.lincheck.runner.ParallelThreadsRunner
 import org.junit.Test
 import kotlin.coroutines.intrinsics.*
 import org.jetbrains.kotlinx.lincheck.*
+import org.jetbrains.kotlinx.lincheck.runner.CompletedInvocationResult
+import org.jetbrains.kotlinx.lincheck.strategy.IterationResult
 import org.jetbrains.kotlinx.lincheck.strategy.Strategy
 import org.jetbrains.kotlinx.lincheck.test.verifier.*
 import org.junit.Assert.assertEquals
@@ -86,7 +88,7 @@ class SuspendResumeScenarios {
 class ParallelThreadsRunnerExceptionTest {
 
     val mockStrategy = object : Strategy(null, null, null) {
-        override fun run() {
+        override fun run(): IterationResult {
             throw UnsupportedOperationException()
         }
     }
@@ -114,10 +116,9 @@ class ParallelThreadsRunnerExceptionTest {
                 }
             }
         }
-        val runner =
-            ParallelThreadsRunner(scenario, mockStrategy, testClass, null)
-        val results = runner.run()
-        assertEquals(results, expectedResults)
+        val runner = ParallelThreadsRunner(scenario, mockStrategy, testClass, null)
+        val invocationResult = runner.run()
+        assertEquals((invocationResult as CompletedInvocationResult).results, expectedResults)
     }
 
     @Test
@@ -135,8 +136,8 @@ class ParallelThreadsRunnerExceptionTest {
             }
         }
         val runner = ParallelThreadsRunner(scenario, mockStrategy, testClass, null)
-        val results = runner.run()
-        assertEquals(results, expectedResults)
+        val invocationResult = runner.run()
+        assertEquals((invocationResult as CompletedInvocationResult).results, expectedResults)
     }
 
     @Test
@@ -148,10 +149,9 @@ class ParallelThreadsRunnerExceptionTest {
                 }
             }
         }
-        val runner =
-            ParallelThreadsRunner(scenario, mockStrategy, testClass, null)
-        val results = runner.run()
-        assertEquals(results, expectedResults)
+        val runner = ParallelThreadsRunner(scenario, mockStrategy, testClass, null)
+        val invocationResult = runner.run()
+        assertEquals((invocationResult as CompletedInvocationResult).results, expectedResults)
     }
 }
 

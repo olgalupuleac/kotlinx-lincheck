@@ -1,34 +1,32 @@
-package org.jetbrains.kotlinx.lincheck.runner;
-
 /*
  * #%L
  * Lincheck
  * %%
  * Copyright (C) 2015 - 2018 Devexperts, LLC
+ * Copyright (C) 2019 JetBrains s.r.o.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Lesser Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Lesser Public
  * License along with this program.  If not, see
  * <http://www.gnu.org/licenses/lgpl-3.0.html>.
  * #L%
  */
 
-import org.jetbrains.kotlinx.lincheck.ExecutionClassLoader;
-import org.jetbrains.kotlinx.lincheck.TransformationClassLoader;
-import org.jetbrains.kotlinx.lincheck.execution.ExecutionResult;
-import org.jetbrains.kotlinx.lincheck.execution.ExecutionScenario;
-import org.jetbrains.kotlinx.lincheck.strategy.Strategy;
-import org.objectweb.asm.ClassVisitor;
-import java.util.concurrent.atomic.AtomicInteger;
+package org.jetbrains.kotlinx.lincheck.runner;
+
+import org.jetbrains.kotlinx.lincheck.*;
+import org.jetbrains.kotlinx.lincheck.execution.*;
+import org.jetbrains.kotlinx.lincheck.strategy.*;
+import org.objectweb.asm.*;
 
 /**
  * Runner determines how to run your concurrent test. In order to support techniques
@@ -40,7 +38,6 @@ public abstract class Runner {
     protected final ExecutionScenario scenario;
     protected final Class<?> testClass;
     public final ExecutionClassLoader classLoader;
-    protected final AtomicInteger completedOrSuspendedThreads = new AtomicInteger(0);
 
     protected Runner(ExecutionScenario scenario, Strategy strategy, Class<?> testClass) {
         this.scenario = scenario;
@@ -79,10 +76,9 @@ public abstract class Runner {
     }
 
     /**
-     * Runs next invocation
-     * @return the obtained results
+     * Runs the next invocation.
      */
-    public abstract ExecutionResult run() throws InterruptedException;
+    public abstract InvocationResult run() throws InterruptedException;
 
     /**
      * This method is invoked by every test thread as the first operation.
@@ -101,11 +97,4 @@ public abstract class Runner {
      * Closes used for this runner resources.
      */
     public void close() {}
-
-    /**
-     * @return whether all scenario threads are completed or suspended
-     */
-    public boolean isParallelExecutionCompleted() {
-        return completedOrSuspendedThreads.get() == scenario.getThreads();
-    }
 }
