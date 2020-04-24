@@ -1,8 +1,5 @@
 package org.jetbrains.kotlinx.lincheck.distributed
 
-import org.jetbrains.kotlinx.lincheck.CTestConfiguration
-import org.jetbrains.kotlinx.lincheck.strategy.stress.StressStrategy
-
 /*
  * #%L
  * Lincheck
@@ -25,32 +22,36 @@ import org.jetbrains.kotlinx.lincheck.strategy.stress.StressStrategy
  * #L%
  */
 
-import org.jetbrains.kotlinx.lincheck.execution.*
-import org.jetbrains.kotlinx.lincheck.strategy.*
+import org.jetbrains.kotlinx.lincheck.CTestConfiguration
+import org.jetbrains.kotlinx.lincheck.execution.ExecutionGenerator
+import org.jetbrains.kotlinx.lincheck.execution.ExecutionScenario
+import org.jetbrains.kotlinx.lincheck.strategy.Strategy
 import org.jetbrains.kotlinx.lincheck.verifier.Verifier
 
-/**
- * Configuration for [stress][StressStrategy] strategy.
- */
+
 class DistributedCTestConfiguration(testClass: Class<*>, iterations: Int,
-                                  threads: Int, actorsPerThread: Int,
-                                    actorsBefore: Int, actorsAfter: Int,
-                               generatorClass: Class<out ExecutionGenerator>,
+                                    threads: Int, actorsPerThread: Int,
+                                    generatorClass: Class<out ExecutionGenerator>,
                                     verifierClass: Class<out Verifier>,
-                               val invocationsPerIteration: Int,
-                                    val addWaits: Boolean,
+                                    val invocationsPerIteration: Int,
+                                    val addWaits : Boolean,
+                                    val networkReliability: Double,
+                                    val messageOrder: MessageOrder,
+                                    val maxNumberOfFailedNodes: Int,
+                                    val supportRecovery: Boolean,
                                     requireStateEquivalenceCheck: Boolean,
                                     minimizeFailedScenario: Boolean,
-                               sequentialSpecification: Class<*>) :
-        CTestConfiguration(testClass, iterations, threads, actorsPerThread, actorsBefore, actorsAfter, generatorClass, verifierClass,
-        requireStateEquivalenceCheck,
-        minimizeFailedScenario, sequentialSpecification) {
+                                    sequentialSpecification: Class<*>) :
+        CTestConfiguration(testClass, iterations, threads, actorsPerThread,
+                0, 0, generatorClass, verifierClass,
+                requireStateEquivalenceCheck,
+                minimizeFailedScenario, sequentialSpecification) {
 
     override fun createStrategy(testClass: Class<*>, scenario: ExecutionScenario, verifier: Verifier): Strategy {
         return DistributedStrategy(this, testClass, scenario, verifier)
     }
 
     companion object {
-        val DEFAULT_INVOCATIONS = 10000
+        const val DEFAULT_INVOCATIONS = 10000
     }
 }
