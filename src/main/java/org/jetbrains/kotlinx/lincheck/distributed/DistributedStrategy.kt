@@ -9,12 +9,14 @@ import org.jetbrains.kotlinx.lincheck.strategy.LincheckFailure
 import org.jetbrains.kotlinx.lincheck.strategy.Strategy
 import org.jetbrains.kotlinx.lincheck.strategy.toLincheckFailure
 import org.jetbrains.kotlinx.lincheck.verifier.Verifier
+import java.lang.reflect.Method
 import java.util.*
 
 class DistributedStrategy(testCfg: DistributedCTestConfiguration,
                           testClass: Class<*>,
                           scenario: ExecutionScenario,
-                          private val verifier: Verifier
+                          private val verifier: Verifier,
+                          val validationFunctions: List<Method>?
 ) : Strategy(scenario) {
     private val random = Random(0)
     private val invocations = testCfg.invocationsPerIteration
@@ -30,7 +32,7 @@ class DistributedStrategy(testCfg: DistributedCTestConfiguration,
             }
         }
         // Create runner
-        runner = ParallelThreadsRunner(this, testClass, waits)
+        runner = DistributedRunner(this, testClass, validationFunctions, waits)
     }
 
     override fun run(): LincheckFailure? {

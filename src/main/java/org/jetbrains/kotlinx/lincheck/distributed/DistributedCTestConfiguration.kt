@@ -27,6 +27,7 @@ import org.jetbrains.kotlinx.lincheck.execution.ExecutionGenerator
 import org.jetbrains.kotlinx.lincheck.execution.ExecutionScenario
 import org.jetbrains.kotlinx.lincheck.strategy.Strategy
 import org.jetbrains.kotlinx.lincheck.verifier.Verifier
+import java.lang.reflect.Method
 
 
 class DistributedCTestConfiguration(testClass: Class<*>, iterations: Int,
@@ -34,7 +35,7 @@ class DistributedCTestConfiguration(testClass: Class<*>, iterations: Int,
                                     generatorClass: Class<out ExecutionGenerator>,
                                     verifierClass: Class<out Verifier>,
                                     val invocationsPerIteration: Int,
-                                    val addWaits : Boolean,
+                                    val addWaits: Boolean,
                                     val networkReliability: Double,
                                     val messageOrder: MessageOrder,
                                     val maxNumberOfFailedNodes: Int,
@@ -46,9 +47,9 @@ class DistributedCTestConfiguration(testClass: Class<*>, iterations: Int,
                 0, 0, generatorClass, verifierClass,
                 requireStateEquivalenceCheck,
                 minimizeFailedScenario, sequentialSpecification) {
-
-    override fun createStrategy(testClass: Class<*>, scenario: ExecutionScenario, verifier: Verifier): Strategy {
-        return DistributedStrategy(this, testClass, scenario, verifier)
+    override fun createStrategy(testClass: Class<*>, scenario:
+    ExecutionScenario, validationFunctions: MutableList<Method>?, verifier: Verifier): Strategy {
+        return DistributedStrategy(this, testClass, scenario, verifier, validationFunctions)
     }
 
     companion object {
