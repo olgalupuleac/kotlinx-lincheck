@@ -148,7 +148,8 @@ class TestClass() : AbstractLincheckTest() {
         (MessageOrder.ASYNCHRONOUS))
     }
 
-    @Test
+    @Test(expected = org.jetbrains.kotlinx.lincheck
+            .LincheckAssertionError::class)
     fun testNetworkUnreliableShouldFail() {
         LinChecker.check(KVStorageCentralSimple::class
                 .java, DistributedOptions().requireStateEquivalenceImplCheck
