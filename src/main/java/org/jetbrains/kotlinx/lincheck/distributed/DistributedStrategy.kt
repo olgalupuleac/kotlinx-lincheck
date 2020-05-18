@@ -12,42 +12,25 @@ import org.jetbrains.kotlinx.lincheck.verifier.Verifier
 import java.lang.reflect.Method
 import java.util.*
 
-class DistributedStrategy(testCfg: DistributedCTestConfiguration,
+class DistributedStrategy(val testCfg: DistributedCTestConfiguration,
                           testClass: Class<*>,
                           scenario: ExecutionScenario,
                           private val verifier: Verifier,
                           val validationFunctions: List<Method>?
 ) : Strategy(scenario) {
-    private val random = Random(0)
     private val invocations = testCfg.invocationsPerIteration
     private val runner: Runner
-    private val waits: MutableList<IntArray>?
 
     init {
-        // Create waits if needed
-        waits = if (testCfg.addWaits) ArrayList() else null
-        if (testCfg.addWaits) {
-            for (actorsForThread in scenario.parallelExecution) {
-                waits!!.add(IntArray(actorsForThread.size))
-            }
-        }
         // Create runner
-        runner = DistributedRunner(this, testClass, validationFunctions, waits)
+        runner = DistributedRunner(this, testClass, validationFunctions)
     }
 
     override fun run(): LincheckFailure? {
         try {
             // Run invocations
             for (invocation in 0 until invocations) {
-                // Specify waits if needed
-                if (waits != null) {
-                    val maxWait = (invocation.toFloat() * MAX_WAIT / invocations).toInt() + 1
-                    for (waitsForThread in waits) {
-                        for (i in waitsForThread.indices) {
-                            waitsForThread[i] = random.nextInt(maxWait)
-                        }
-                    }
-                }
+                println("INVOCATION $invocation")
                 when (val ir = runner.run()) {
                     is CompletedInvocationResult -> {
                         if (!verifier.verifyResults(scenario, ir.results))
@@ -58,9 +41,8 @@ class DistributedStrategy(testCfg: DistributedCTestConfiguration,
             }
             return null
         } finally {
+            println("All")
             runner.close()
         }
     }
 }
-
-private const val MAX_WAIT = 1000

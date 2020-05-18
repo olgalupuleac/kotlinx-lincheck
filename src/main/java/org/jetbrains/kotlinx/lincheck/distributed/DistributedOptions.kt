@@ -17,19 +17,22 @@ class DistributedOptions : Options<DistributedOptions,
     var maxNumberOfFailedNodes: Int = 0
     var supportRecovery: Boolean = true
     var invocationsPerIteration: Int = DistributedCTestConfiguration.DEFAULT_INVOCATIONS
-    var addWaits : Boolean = true
+    var maxDelay : Int = 0
+    var maxMessageCount : Int = Int.MAX_VALUE
+    var maxMessagePerProcess : Int = Int.MAX_VALUE
 
     override fun createTestConfigurations(testClass: Class<*>): DistributedCTestConfiguration {
         return DistributedCTestConfiguration(testClass, iterations, threads,
                 actorsPerThread, executionGenerator,
-                verifier, invocationsPerIteration, addWaits, networkReliability,
+                verifier, invocationsPerIteration, networkReliability,
                 messageOrder, maxNumberOfFailedNodes, supportRecovery,
+                maxDelay, maxMessageCount, maxMessagePerProcess,
                 requireStateEquivalenceImplementationCheck, minimizeFailedScenario,
                 chooseSequentialSpecification(sequentialSpecification, testClass))
     }
 
-    fun addWaits(value: Boolean): DistributedOptions {
-        addWaits = value
+    fun delay(delay : Int) : DistributedOptions {
+        this.maxDelay = delay
         return this
     }
 
@@ -60,6 +63,16 @@ class DistributedOptions : Options<DistributedOptions,
 
     fun invocationsPerIteration(invocations: Int): DistributedOptions {
         this.invocationsPerIteration = invocations
+        return this
+    }
+
+    fun maxMessageCount(count : Int) : DistributedOptions {
+        this.maxMessageCount = count
+        return this
+    }
+
+    fun maxMessageCountPerProcess(count : Int) : DistributedOptions {
+        this.maxMessagePerProcess = count
         return this
     }
 }

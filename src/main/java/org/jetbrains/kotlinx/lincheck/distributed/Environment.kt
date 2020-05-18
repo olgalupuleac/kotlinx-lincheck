@@ -17,11 +17,17 @@ interface Environment {
     /**
      * Sends the specified [message] to the process [destId] (from 1 to [nProcesses]).
      */
-    fun send(destId: Int, message: Message)
-}
+    fun send(destId: Int, message: String)
 
-/**
- * Builds the message and sends it to the process [destId].
- */
-inline fun Environment.send(destId: Int, builder: MessageBuilder.() -> Unit = {}) =
-        send(destId, Message(builder))
+    /**
+     * Sends the specified [message] to all processes except itself (from 1 to
+     * [nProcesses]).
+     */
+    fun broadcast(message: String) {
+        for (i in 1..nProcesses) {
+            if (i != processId) {
+                send(i, message)
+            }
+        }
+    }
+}
